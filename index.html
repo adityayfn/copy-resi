@@ -5,41 +5,82 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Extractor Resi Shopee</title>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
     <style>
-      body {
+      /* body {
         font-family: sans-serif;
         text-align: center;
         padding: 2rem;
-      }
+      } */
+
       #output {
         margin-top: 1rem;
-        white-space: pre-wrap;
         background: #f0f0f0;
         padding: 1rem;
         border-radius: 10px;
       }
-      button {
-        margin-top: 1rem;
-        padding: 10px 20px;
+
+      .resi-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #fff;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+      }
+
+      .resi-text {
+        font-family: monospace;
         font-size: 1rem;
+        word-break: break-word;
       }
-      input[type="file"] {
+
+      .copy-btn {
+        padding: 5px 10px;
+        font-size: 0.9rem;
+        cursor: pointer;
+        background-color: #fc8600;
+        color: white;
+        border: none;
+        border-radius: 5px;
+        margin-left: 10px;
+      }
+
+      /* input[type="file"] {
         margin-top: 1rem;
-      }
+      } */
     </style>
   </head>
   <body>
-    <h1>Extractor Resi Shopee</h1>
-    <p>Upload beberapa screenshot resi transferan</p>
-    <input
-      type="file"
-      accept="image/*"
-      multiple
-      onchange="handleMultipleImages(event)"
-    />
-    <div id="loading"></div>
-    <div id="output"></div>
-    <button onclick="copyToClipboard()">Salin ke Clipboard</button>
+    <div
+      id="ifSuccess"
+      class="border-1 rounded-md w-20 p-2 bg-green-400 fixed right-4 top-4 hidden"
+    >
+      <h1 class="text-black">Berhasil</h1>
+    </div>
+    <h1 class="text-center text-2xl my-4">Extractor Resi Shopee</h1>
+    <p class="text-center">Upload beberapa screenshot resi transferan</p>
+    <div class="flex flex-col items-center justify-center my-4">
+      <label
+        for="file-upload"
+        class="cursor-pointer px-4 py-2 bg-orange-400 text-white rounded-lg shadow hover:bg-orange-600 transition"
+      >
+        Upload
+      </label>
+      <input
+        id="file-upload"
+        class="hidden"
+        type="file"
+        accept="image/*"
+        multiple
+        onchange="handleMultipleImages(event)"
+      />
+    </div>
+    <div id="loading" class="text-center"></div>
+    <div id="output" class="hidden"></div>
 
     <script>
       let globalResiList = []
@@ -51,7 +92,7 @@
         document.getElementById(
           "loading"
         ).textContent = `🔍 Memproses ${files.length} gambar...`
-        document.getElementById("output").textContent = ""
+        document.getElementById("output").innerHTML = ""
 
         const allMatches = new Set()
 
@@ -59,7 +100,8 @@
           const file = files[i]
           const result = await Tesseract.recognize(file, "eng")
           const text = result.data.text
-          const matches = text.match(/SPXID\d{12,}/g)
+          const matches = text.match(/SPXID\d+/g)
+
           if (matches) {
             matches.forEach((match) => allMatches.add(match))
           }
@@ -67,48 +109,61 @@
 
         globalResiList = Array.from(allMatches)
 
-        let output = ""
+        const outputDiv = document.getElementById("output")
+        outputDiv.innerHTML = ""
+
         if (globalResiList.length > 0) {
-          output = "📦 Resi terdeteksi:\n" + globalResiList.join("\n")
+          document.getElementById("output").classList.remove("hidden")
+          globalResiList.forEach((resi) => {
+            const itemDiv = document.createElement("div")
+            itemDiv.className = "resi-item"
+
+            const resiText = document.createElement("span")
+            resiText.className = "resi-text"
+            resiText.textContent = resi
+
+            const button = document.createElement("button")
+            button.className = "copy-btn"
+            button.textContent = "Salin"
+            button.onclick = () => copySingleResi(resi)
+
+            itemDiv.appendChild(resiText)
+            itemDiv.appendChild(button)
+            outputDiv.appendChild(itemDiv)
+          })
         } else {
-          output = "⚠️ Tidak ada resi ditemukan."
+          outputDiv.textContent = "⚠️ Tidak ada resi ditemukan."
         }
 
-        document.getElementById("output").textContent = output
         document.getElementById("loading").textContent = ""
       }
 
-      function copyToClipboard() {
-        if (!globalResiList.length) {
-          alert("⚠️ Tidak ada resi untuk disalin.")
-          return
-        }
-
-        const textToCopy = globalResiList.join("\n")
-
-        // Pastikan clipboard API tersedia
+      function copySingleResi(resi) {
         if (navigator.clipboard && window.isSecureContext) {
           navigator.clipboard
-            .writeText(textToCopy)
+            .writeText(resi)
             .then(() => {
-              alert("✅ Resi berhasil disalin per baris.")
+              // alert(`✅ Resi ${resi} berhasil disalin.`)
+              triggerSuccess()
+              setTimeout(() => {
+                document.getElementById("ifSuccess").classList.add("hidden")
+              }, 1500)
             })
-            .catch((err) => {
-              console.error("Clipboard gagal:", err)
-              fallbackCopy(textToCopy)
-            })
+            .catch((err) => fallbackCopy(resi))
         } else {
-          // Fallback untuk browser lama atau halaman tidak aman
-          fallbackCopy(textToCopy)
+          fallbackCopy(resi)
         }
-        cek()
+      }
+
+      function triggerSuccess() {
+        const alert = document
+          .getElementById("ifSuccess")
+          .classList.remove("hidden")
       }
 
       function fallbackCopy(text) {
         const textarea = document.createElement("textarea")
         textarea.value = text
-
-        // Hindari muncul di layar
         textarea.setAttribute("readonly", "")
         textarea.style.position = "absolute"
         textarea.style.left = "-9999px"
@@ -118,10 +173,7 @@
         document.execCommand("copy")
         document.body.removeChild(textarea)
 
-        alert("✅ (Fallback) Resi berhasil disalin per baris.")
-      }
-      function cek() {
-        console.log(globalResiList)
+        alert(`✅ (Fallback) "${text}" berhasil disalin.`)
       }
     </script>
   </body>
