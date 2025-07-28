@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Extractor Resi Shopee</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <style>
+      body {
+        font-family: sans-serif;
+        text-align: center;
+        padding: 2rem;
+      }
+      #output {
+        margin-top: 1rem;
+        white-space: pre-wrap;
+        background: #f0f0f0;
+        padding: 1rem;
+        border-radius: 10px;
+      }
+      button {
+        margin-top: 1rem;
+        padding: 10px 20px;
+        font-size: 1rem;
+      }
+      input[type="file"] {
+        margin-top: 1rem;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Extractor Resi Shopee</h1>
+    <p>Upload beberapa screenshot resi transferan</p>
+    <input
+      type="file"
+      accept="image/*"
+      multiple
+      onchange="handleMultipleImages(event)"
+    />
+    <div id="loading"></div>
+    <div id="output"></div>
+    <button onclick="copyToClipboard()">Salin ke Clipboard</button>
+
+    <script>
+      let globalResiList = []
+
+      async function handleMultipleImages(event) {
+        const files = event.target.files
+        if (!files.length) return
+
+        document.getElementById(
+          "loading"
+        ).textContent = `🔍 Memproses ${files.length} gambar...`
+        document.getElementById("output").textContent = ""
+
+        const allMatches = new Set()
+
+        for (let i = 0; i < files.length; i++) {
+          const file = files[i]
+          const result = await Tesseract.recognize(file, "eng")
+          const text = result.data.text
+          const matches = text.match(/SPXID\d{12,}/g)
+          if (matches) {
+            matches.forEach((match) => allMatches.add(match))
+          }
+        }
+
+        globalResiList = Array.from(allMatches)
+
+        let output = ""
+        if (globalResiList.length > 0) {
+          output = "📦 Resi terdeteksi:\n" + globalResiList.join("\n")
+        } else {
+          output = "⚠️ Tidak ada resi ditemukan."
+        }
+
+        document.getElementById("output").textContent = output
+        document.getElementById("loading").textContent = ""
+      }
+
+      function copyToClipboard() {
+        if (!globalResiList.length) return alert("Tidak ada yang disalin")
+        const text = globalResiList.join("\n")
+        navigator.clipboard
+          .writeText(text)
+          .then(() => alert("✅ Disalin ke clipboard!"))
+          .catch((err) => alert("❌ Gagal menyalin"))
+      }
+    </script>
+  </body>
+</html>
