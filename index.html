@@ -79,12 +79,49 @@
       }
 
       function copyToClipboard() {
-        if (!globalResiList.length) return alert("Tidak ada yang disalin")
-        const text = globalResiList.join("\n")
-        navigator.clipboard
-          .writeText(text)
-          .then(() => alert("✅ Disalin ke clipboard!"))
-          .catch((err) => alert("❌ Gagal menyalin"))
+        if (!globalResiList.length) {
+          alert("⚠️ Tidak ada resi untuk disalin.")
+          return
+        }
+
+        const textToCopy = globalResiList.join("\n")
+
+        // Pastikan clipboard API tersedia
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard
+            .writeText(textToCopy)
+            .then(() => {
+              alert("✅ Resi berhasil disalin per baris.")
+            })
+            .catch((err) => {
+              console.error("Clipboard gagal:", err)
+              fallbackCopy(textToCopy)
+            })
+        } else {
+          // Fallback untuk browser lama atau halaman tidak aman
+          fallbackCopy(textToCopy)
+        }
+        cek()
+      }
+
+      function fallbackCopy(text) {
+        const textarea = document.createElement("textarea")
+        textarea.value = text
+
+        // Hindari muncul di layar
+        textarea.setAttribute("readonly", "")
+        textarea.style.position = "absolute"
+        textarea.style.left = "-9999px"
+
+        document.body.appendChild(textarea)
+        textarea.select()
+        document.execCommand("copy")
+        document.body.removeChild(textarea)
+
+        alert("✅ (Fallback) Resi berhasil disalin per baris.")
+      }
+      function cek() {
+        console.log(globalResiList)
       }
     </script>
   </body>
