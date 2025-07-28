@@ -94,23 +94,24 @@
         ).textContent = `🔍 Memproses ${files.length} gambar...`
         document.getElementById("output").innerHTML = ""
 
+        const outputDiv = document.getElementById("output")
+        outputDiv.innerHTML = ""
+
+        const promises = [...files].map((file) =>
+          Tesseract.recognize(file, "eng").then((result) => result.data.text)
+        )
+
+        const texts = await Promise.all(promises)
+
         const allMatches = new Set()
-
-        for (let i = 0; i < files.length; i++) {
-          const file = files[i]
-          const result = await Tesseract.recognize(file, "eng")
-          const text = result.data.text
+        texts.forEach((text) => {
           const matches = text.match(/SPXID\d+/g)
-
           if (matches) {
             matches.forEach((match) => allMatches.add(match))
           }
-        }
+        })
 
         globalResiList = Array.from(allMatches)
-
-        const outputDiv = document.getElementById("output")
-        outputDiv.innerHTML = ""
 
         if (globalResiList.length > 0) {
           document.getElementById("output").classList.remove("hidden")
@@ -143,11 +144,11 @@
           navigator.clipboard
             .writeText(resi)
             .then(() => {
-              // alert(`✅ Resi ${resi} berhasil disalin.`)
+              
               triggerSuccess()
               setTimeout(() => {
                 document.getElementById("ifSuccess").classList.add("hidden")
-              }, 1500)
+              }, 400)
             })
             .catch((err) => fallbackCopy(resi))
         } else {
