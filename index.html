@@ -47,6 +47,19 @@
         border: none;
         border-radius: 5px;
         margin-left: 10px;
+        transition: all 0.2s ease-in-out; /* animasi halus saat hover/active */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15); /* efek bayangan */
+      }
+
+      .copy-btn:hover {
+        background-color: #e67600;
+        transform: translateY(-1px); /* sedikit naik saat hover */
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2); /* bayangan lebih dalam */
+      }
+
+      .copy-btn:active {
+        transform: scale(0.95); /* efek klik */
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2); /* bayangan lebih kecil */
       }
 
       /* input[type="file"] {
@@ -63,9 +76,18 @@
     </div>
     <h1 class="text-center text-2xl my-4">Extractor Resi Shopee</h1>
     <p class="text-center">Upload beberapa screenshot resi transferan</p>
-    <div class="flex flex-col items-center justify-center my-4">
+    <div class="flex flex-col items-center justify-center my-4 gap-4">
+      <button
+        onclick="window.location.reload()"
+        id="reupload"
+        class="mt-4 bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 transition hidden cursor-pointer"
+      >
+        🔄 Upload Ulang
+      </button>
+
       <label
         for="file-upload"
+        id="btn-upload"
         class="cursor-pointer px-4 py-2 bg-orange-400 text-white rounded-lg shadow hover:bg-orange-600 transition"
       >
         Upload
@@ -80,7 +102,21 @@
       />
     </div>
     <div id="loading" class="text-center"></div>
-    <div id="output" class="hidden"></div>
+    <div id="output" class="hidden mb-10"></div>
+
+    <footer class="fixed bottom-0 w-full p-3 bg-orange-500">
+      <div class="flex place-content-center">
+        <h1 class="text-white">
+          REPORT BUG? DM
+          <a
+            target="_blank"
+            href="https://www.instagram.com/adityayfn"
+            class="underline hover:text-blue-600"
+            >IG</a
+          >
+        </h1>
+      </div>
+    </footer>
 
     <script>
       let globalResiList = []
@@ -115,6 +151,8 @@
 
         if (globalResiList.length > 0) {
           document.getElementById("output").classList.remove("hidden")
+          document.getElementById("btn-upload").classList.add("hidden")
+          document.getElementById("reupload").classList.remove("hidden")
           globalResiList.forEach((resi) => {
             const itemDiv = document.createElement("div")
             itemDiv.className = "resi-item"
@@ -144,7 +182,6 @@
           navigator.clipboard
             .writeText(resi)
             .then(() => {
-              
               triggerSuccess()
               setTimeout(() => {
                 document.getElementById("ifSuccess").classList.add("hidden")
